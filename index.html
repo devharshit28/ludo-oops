@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>🎲 Ludo — Neubrutalism OOP Project</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800;900&family=Space+Grotesk:wght@700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ══════════════ SPLASH / LANDING PAGE ══════════════ -->
+<div id="splash" class="hidden">
+    <div class="splash-layout">
+
+        <!-- LEFT NEGATIVE SPACE WIDGET -->
+        <aside class="splash-side splash-left">
+            <!-- C++ OOP Architecture Widget -->
+            <div class="nb-widget oop-widget">
+                <div class="widget-header">
+                    <span class="widget-badge bg-purple">CPP ARCH</span>
+                    <h3 class="widget-title">⚡ OOP CONCEPTS</h3>
+                </div>
+                <div class="oop-tree">
+                    <div class="oop-branch-item">
+                        <span class="oop-node-tag bg-pink">Abstract Base</span>
+                        <div class="oop-node-title">class Player</div>
+                        <div class="oop-node-desc">Pure virtual <code>colour()</code>, encapsulated <code>pos[4]</code>, <code>canMove()</code>, <code>trackCell()</code></div>
+                    </div>
+                    <div class="oop-branch-arrow">↳ INHERITANCE</div>
+                    <div class="oop-subclasses">
+                        <span class="oop-sub-badge bg-red">class Red</span>
+                        <span class="oop-sub-badge bg-lime">class Green</span>
+                        <span class="oop-sub-badge bg-blue">class Blue</span>
+                        <span class="oop-sub-badge bg-sunshine">class Yellow</span>
+                    </div>
+                </div>
+                <div class="oop-tags" style="margin-top: 12px;">
+                    <span class="oop-tag bg-teal">Runtime Polymorphism</span>
+                    <span class="oop-tag bg-sunshine">Virtual Destructors</span>
+                    <span class="oop-tag bg-purple">Memory Management</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- CENTER: MAIN LANDING CARD -->
+        <main class="splash-center">
+            <div class="splash-card">
+                <div class="logo-wrapper">
+                    <img src="Ludo.png?v=2" class="splash-logo-img" alt="Ludo Game Banner">
+                </div>
+                <h1 class="splash-title">LUDO</h1>
+                <div class="splash-tag">CLASSIC BOARD GAME • OOP IN C++</div>
+
+                <p class="choose-label">CHOOSE NUMBER OF PLAYERS</p>
+                <div class="player-btns">
+                    <button class="pbtn pbtn-2" onclick="startGame(2)">
+                        <span class="pbtn-num">2</span>
+                        <span class="pbtn-label">PLAYERS</span>
+                        <span class="pbtn-dots">
+                            <span style="background:#EF4444"></span>
+                            <span style="background:#FFE156"></span>
+                        </span>
+                    </button>
+                    <button class="pbtn pbtn-3" onclick="startGame(3)">
+                        <span class="pbtn-num">3</span>
+                        <span class="pbtn-label">PLAYERS</span>
+                        <span class="pbtn-dots">
+                            <span style="background:#EF4444"></span>
+                            <span style="background:#B8F84E"></span>
+                            <span style="background:#FFE156"></span>
+                        </span>
+                    </button>
+                    <button class="pbtn pbtn-4 pbtn-pop" onclick="startGame(4)">
+                        <span class="pbtn-badge">POPULAR</span>
+                        <span class="pbtn-num">4</span>
+                        <span class="pbtn-label">PLAYERS</span>
+                        <span class="pbtn-dots">
+                            <span style="background:#EF4444"></span>
+                            <span style="background:#B8F84E"></span>
+                            <span style="background:#FFE156"></span>
+                            <span style="background:#60A5FA"></span>
+                        </span>
+                    </button>
+                </div>
+
+                <details class="rules-box">
+                    <summary>📖 QUICK RULES SUMMARY</summary>
+                    <ul>
+                        <li>Roll a <strong>6</strong> to release a token from base.</li>
+                        <li>Land on an opponent's token to send them back home!</li>
+                        <li>⭐ Star cells are safe zones — no captures allowed.</li>
+                        <li>Reach home with all 4 tokens to claim victory! 🏆</li>
+                    </ul>
+                </details>
+            </div>
+        </main>
+
+        <!-- RIGHT NEGATIVE SPACE WIDGET -->
+        <aside class="splash-side splash-right">
+            <!-- Interactive Live Dice Roller Widget -->
+            <div class="nb-widget dice-widget-box">
+                <div class="widget-header">
+                    <span class="widget-badge bg-pink">LIVE SIM</span>
+                    <h3 class="widget-title">🎲 DICE ROLLER</h3>
+                </div>
+                <div class="test-dice-box">
+                    <div id="testDiceFace" class="test-dice-face">⚅</div>
+                    <button class="test-dice-btn" onclick="testRollDice()">TEST ROLL</button>
+                    <div id="testDiceMsg" class="test-dice-msg">Click button to test lucky roll!</div>
+                    <div class="dice-streak-bar">
+                        <span class="streak-label">🍀 LUCK STREAK</span>
+                        <div class="streak-stars" id="testDiceStars">⭐⭐⭐</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+    </div>
+</div>
+
+<!-- ══════════════ GAME SCREEN ══════════════ -->
+<div id="game" class="hidden">
+
+    <!-- Floating top nav -->
+    <header class="game-topbar">
+        <div class="topbar-brand">
+            <span class="brand-badge">🎲 LUDO</span>
+            <span class="brand-sub">OOP SIMULATION</span>
+        </div>
+        <div class="topbar-actions">
+            <button class="float-btn btn-sound" id="soundToggleBtn" onclick="toggleSound()">🔊 Sound ON</button>
+            <button class="float-btn btn-menu" onclick="backToSplash()">🏠 Menu</button>
+            <button class="float-btn btn-restart" onclick="restartCurrent()">↺ Restart</button>
+        </div>
+    </header>
+
+    <div class="game-dashboard">
+
+        <!-- LEFT DASHBOARD PANEL: Current Turn -->
+        <aside class="game-panel panel-left">
+            <div class="nb-widget turn-widget">
+                <div class="widget-header">
+                    <span class="widget-badge bg-sunshine">STATUS</span>
+                    <h3 class="widget-title">CURRENT TURN</h3>
+                </div>
+                <div class="active-turn-box" id="activeTurnBox">
+                    <div class="active-avatar" id="activeAvatar">👦</div>
+                    <div class="active-details">
+                        <div class="active-name" id="activePlayerName">PLAYER 1</div>
+                        <div class="active-hint" id="activeHint">Roll the dice to start!</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- CENTER ARENA: Board & Controls -->
+        <main class="game-arena">
+            <!-- TOP ROW: Player 1 (Red) ←→ Player 2 (Green) -->
+            <div class="pcards-row" id="pcards_top"></div>
+
+            <!-- BOARD CONTAINER -->
+            <div id="board"></div>
+
+            <!-- BOTTOM ROW: Player 3 (Blue) ←→ Player 4 (Yellow) -->
+            <div class="pcards-row" id="pcards_bottom"></div>
+
+            <!-- DYNAMIC STATUS MESSAGE -->
+            <div id="msg" class="game-msg">Roll the dice to begin!</div>
+
+            <!-- CONTROLS: ↺  🎲  ⏭ -->
+            <div class="game-controls">
+                <button class="ctrl-btn btn-ctrl-restart" title="Restart Game" onclick="restartCurrent()">↺</button>
+                <button class="ctrl-btn dice-btn" id="rollBtn" title="Click to Roll Dice" onclick="roll()">
+                    <span id="diceDisplay">🎲</span>
+                </button>
+                <button class="ctrl-btn btn-ctrl-auto" title="Auto Move / Pass" onclick="autoPlay()">⏭</button>
+            </div>
+        </main>
+
+        <!-- RIGHT DASHBOARD PANEL: Live Token Progress -->
+        <aside class="game-panel panel-right">
+            <div class="nb-widget tracker-widget">
+                <div class="widget-header">
+                    <span class="widget-badge bg-lime">TOKENS</span>
+                    <h3 class="widget-title">📊 PROGRESS</h3>
+                </div>
+                <div class="token-tracker-list" id="tokenTrackerList">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+        </aside>
+
+    </div>
+</div>
+
+<!-- ══════════════ WIN OVERLAY ══════════════ -->
+<div id="winOverlay" class="hidden">
+    <div class="win-card">
+        <div class="win-confetti" id="confetti"></div>
+        <div class="win-trophy">🏆</div>
+        <h2 class="win-title" id="winTitle">WINNER!</h2>
+        <p class="win-sub">Congratulations! All 4 tokens made it home safely!</p>
+        <div class="win-btns">
+            <button class="win-btn win-menu-btn" onclick="backToSplash()">🏠 MAIN MENU</button>
+            <button class="win-btn win-play-btn" onclick="restartCurrent()">↺ PLAY AGAIN</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════ SCRIPTS ══════════════ -->
+<script>
+/* ════════════════════════════════════════
+   SOUND SYSTEM (Web Audio API – no external files)
+   ════════════════════════════════════════ */
+class SoundManager {
+    constructor() {
+        this._ctx = null;
+        this.muted = false;
+    }
+
+    get ctx() {
+        if (!this._ctx)
+            this._ctx = new (window.AudioContext || window.webkitAudioContext)();
+        return this._ctx;
+    }
+
+    toggle() {
+        this.muted = !this.muted;
+        return !this.muted;
+    }
+
+    _note(freq, startT, dur, type = 'sine', vol = 0.35) {
+        if (this.muted) return;
+        try {
+            const osc  = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.connect(gain); gain.connect(this.ctx.destination);
+            osc.type = type;
+            osc.frequency.value = freq;
+            const t = this.ctx.currentTime + startT;
+            gain.gain.setValueAtTime(0, t);
+            gain.gain.linearRampToValueAtTime(vol, t + 0.01);
+            gain.gain.exponentialRampToValueAtTime(0.001, t + Math.max(dur, 0.01));
+            osc.start(t); osc.stop(t + dur + 0.08);
+        } catch(e) {}
+    }
+
+    playStart() {
+        [[261.6,0,.15],[329.6,.12,.15],[392,.24,.15],[523.3,.36,.22],[659.3,.50,.28]]
+            .forEach(([f,t,d]) => this._note(f, t, d, 'sine', 0.4));
+    }
+
+    playDice() {
+        [[340,0,.04,'square',.25],[260,.05,.04,'square',.2],[190,.10,.06,'square',.15]]
+            .forEach(([f,t,d,type,v]) => this._note(f,t,d,type,v));
+    }
+
+    playCapture() {
+        [[220,0,.1,'sawtooth',.35],[130,.11,.18,'sawtooth',.25]]
+            .forEach(([f,t,d,type,v]) => this._note(f,t,d,type,v));
+    }
+
+    playHome() {
+        [[659,0,.12],[784,.11,.12],[1047,.22,.25]]
+            .forEach(([f,t,d]) => this._note(f, t, d, 'sine', 0.4));
+    }
+
+    playWin() {
+        [[523,0,.18],[523,.20,.18],[523,.40,.18],
+         [659,.60,.22],[784,.85,.28],[1047,1.15,.5]]
+            .forEach(([f,t,d]) => this._note(f, t, d, 'sine', 0.45));
+        [[659,0,.18],[784,.20,.18],[988,.40,.18]]
+            .forEach(([f,t,d]) => this._note(f, t, d, 'sine', 0.2));
+    }
+
+    playToken() { this._note(540, 0, 0.08, 'triangle', 0.25); }
+}
+const sound = new SoundManager();
+
+function toggleSound() {
+    const isAudioOn = sound.toggle();
+    const btn = document.getElementById('soundToggleBtn');
+    btn.textContent = isAudioOn ? '🔊 Sound ON' : '🔇 Sound OFF';
+    btn.classList.toggle('btn-muted', !isAudioOn);
+}
+
+/* ════════════════════════════════════════
+   GAME GLOBALS & PALETTE
+   ════════════════════════════════════════ */
+var Module = { onRuntimeInitialized: init };
+const C = {};
+
+const colors    = ['red','green','yellow','blue'];
+const names     = ['Red','Green','Yellow','Blue'];
+const colorHex  = ['#EF4444','#B8F84E','#FFE156','#60A5FA'];
+const faces     = ['','⚀','⚁','⚂','⚃','⚄','⚅'];
+
+const cardToPlayer  = [0, 1, 3, 2];
+const cardBg        = ['#EF4444','#B8F84E','#60A5FA','#FFE156'];
+const cardAccent    = ['#FF6B9D','#2DD4BF','#A855F7','#FB923C'];
+const cardEmoji     = ['👦','👧','👦','👧'];
+const cardLabel     = ['Player 1','Player 2','Player 3','Player 4'];
+
+let currentCount   = 4;
+let winSoundPlayed = false;
+
+/* ════════════════════════════════════════
+   LIVE LOG & DICE TEST SIMULATOR
+   ════════════════════════════════════════ */
+function logEvent(msg, tag = 'GAME') {
+    const box = document.getElementById('eventLogBox');
+    if (!box) return;
+    const entry = document.createElement('div');
+    entry.className = 'log-entry';
+    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    entry.innerHTML = `<span class="log-tag tag-${tag.toLowerCase()}">${tag}</span> <span class="log-time">${time}</span> ${msg}`;
+    box.prepend(entry);
+    if (box.children.length > 20) {
+        box.removeChild(box.lastChild);
+    }
+}
+
+function testRollDice() {
+    sound.playDice();
+    const d = Math.floor(Math.random() * 6) + 1;
+    const el = document.getElementById('testDiceFace');
+    el.textContent = faces[d];
+    el.classList.add('dice-anim');
+    setTimeout(() => el.classList.remove('dice-anim'), 350);
+
+    const msg = document.getElementById('testDiceMsg');
+    if (d === 6) {
+        msg.textContent = `🔥 Lucky roll! Rolled a 6! Release a token!`;
+    } else {
+        msg.textContent = `Rolled a ${d}! Move ahead ${d} spaces.`;
+    }
+}
+
+/* ════════════════════════════════════════
+   INIT (called by ludo.js bootstrap)
+   ════════════════════════════════════════ */
+function init() {
+    ['newGame','rollDice','moveToken','tokenRow','tokenCol','tokenPos',
+     'isActive','currentPlayer','getDice','getWinner','canMoveToken']
+        .forEach(name => {
+            C[name] = Module.cwrap(name, 'number', ['number','number']);
+        });
+    C.getMessage = Module.cwrap('getMessage', 'string', []);
+    buildBoard();
+    document.getElementById('splash').classList.remove('hidden');
+}
+
+/* ════════════════════════════════════════
+   BOARD BUILDER
+   ════════════════════════════════════════ */
+function cellClass(r, c) {
+    const inner = ((r>=1&&r<=4)||(r>=10&&r<=13)) && ((c>=1&&c<=4)||(c>=10&&c<=13));
+    const ex = inner ? ' inner' : '';
+    if (r<6  && c<6)  return 'red'    + ex;
+    if (r<6  && c>8)  return 'green'  + ex;
+    if (r>8  && c>8)  return 'yellow' + ex;
+    if (r>8  && c<6)  return 'blue'   + ex;
+    if (r>5&&r<9&&c>5&&c<9) {
+        if (r==7&&c==6) return 'red';
+        if (r==6&&c==7) return 'green';
+        if (r==7&&c==8) return 'yellow';
+        if (r==8&&c==7) return 'blue';
+        return 'center';
+    }
+    if (r==7 && c>=1 && c<=5)  return 'path red';
+    if (c==7 && r>=1 && r<=5)  return 'path green';
+    if (r==7 && c>=9 && c<=13) return 'path yellow';
+    if (c==7 && r>=9 && r<=13) return 'path blue';
+    const k = r+','+c;
+    const starts = {'6,1':'red','1,8':'green','8,13':'yellow','13,6':'blue'};
+    if (starts[k]) return 'path start-' + starts[k];
+    if (['2,6','6,12','12,8','8,2'].includes(k)) return 'path star';
+    return 'path';
+}
+
+const homeArrows = {
+    'c7_1' : '→',
+    'c1_7' : '↓',
+    'c7_13': '←',
+    'c13_7': '↑'
+};
+
+function buildBoard() {
+    const board = document.getElementById('board');
+    board.innerHTML = '';
+    for (let r = 0; r < 15; r++) {
+        for (let c = 0; c < 15; c++) {
+            const d = document.createElement('div');
+            d.className = 'cell ' + cellClass(r, c);
+            d.id = 'c' + r + '_' + c;
+            const arrow = homeArrows[d.id];
+            if (arrow) {
+                const ar = document.createElement('span');
+                ar.className = 'home-arrow';
+                ar.textContent = arrow;
+                d.appendChild(ar);
+            }
+            board.appendChild(d);
+        }
+    }
+}
+
+/* ════════════════════════════════════════
+   GAME FLOW
+   ════════════════════════════════════════ */
+function startGame(count) {
+    currentCount = count;
+    winSoundPlayed = false;
+    document.getElementById('splash').classList.add('hidden');
+    document.getElementById('game').classList.remove('hidden');
+    document.getElementById('winOverlay').classList.add('hidden');
+    C.newGame(count);
+    buildPlayerCards(count);
+    buildTokenTracker(count);
+    sound.playStart();
+    logEvent(`New ${count}-Player Match Started!`, 'START');
+    draw();
+}
+
+function restartCurrent() {
+    logEvent(`Game Restarted!`, 'RESET');
+    startGame(currentCount);
+}
+
+function backToSplash() {
+    document.getElementById('game').classList.add('hidden');
+    document.getElementById('winOverlay').classList.add('hidden');
+    document.getElementById('splash').classList.remove('hidden');
+}
+
+function roll() {
+    sound.playDice();
+    const curBefore = C.currentPlayer();
+    const d = C.rollDice();
+    logEvent(`${names[curBefore]} rolled a ${d}`, d === 6 ? 'SIX' : 'ROLL');
+    draw();
+}
+
+function autoPlay() {
+    if (C.getWinner() >= 0) return;
+    let moved = false;
+    for (let t = 0; t < 4; t++) {
+        if (C.canMoveToken(t)) {
+            sound.playToken();
+            C.moveToken(t);
+            checkMoveSounds();
+            logEvent(`${names[C.currentPlayer()]} auto-moved token ${t+1}`, 'MOVE');
+            moved = true;
+            break;
+        }
+    }
+    if (!moved) {
+        sound.playDice();
+        const d = C.rollDice();
+        logEvent(`${names[C.currentPlayer()]} rolled ${d} via auto`, 'AUTO');
+    }
+    draw();
+}
+
+function checkMoveSounds() {
+    const m = C.getMessage();
+    if (m.includes('captured')) {
+        sound.playCapture();
+        logEvent(m, 'CAP');
+    } else if (m.includes('home')) {
+        sound.playHome();
+        logEvent(m, 'HOME');
+    }
+}
+
+/* ════════════════════════════════════════
+   PLAYER CARDS
+   ════════════════════════════════════════ */
+function buildPlayerCards(count) {
+    const topRow    = document.getElementById('pcards_top');
+    const bottomRow = document.getElementById('pcards_bottom');
+    topRow.innerHTML = '';
+    bottomRow.innerHTML = '';
+
+    for (let pos = 0; pos < 4; pos++) {
+        const p      = cardToPlayer[pos];
+        const active = C.isActive(p);
+        const card   = document.createElement('div');
+        card.className = 'pcard' + (active ? '' : ' pcard-inactive');
+        card.id = 'pcard_' + pos;
+        card.style.setProperty('--pc-bg', cardBg[pos]);
+        card.style.setProperty('--pc-accent', cardAccent[pos]);
+        card.innerHTML = `
+            <div class="pcard-avatar">${cardEmoji[pos]}</div>
+            <div class="pcard-label">
+                <span class="pcard-dot"></span>${cardLabel[pos]}
+            </div>`;
+        (pos < 2 ? topRow : bottomRow).appendChild(card);
+    }
+}
+
+/* ════════════════════════════════════════
+   TOKEN TRACKER WIDGET
+   ════════════════════════════════════════ */
+function buildTokenTracker(count) {
+    const list = document.getElementById('tokenTrackerList');
+    list.innerHTML = '';
+    for (let pos = 0; pos < 4; pos++) {
+        const p = cardToPlayer[pos];
+        if (!C.isActive(p)) continue;
+        const item = document.createElement('div');
+        item.className = 'tracker-item';
+        item.id = 'trackerItem_' + p;
+        item.style.borderColor = cardBg[pos];
+        item.innerHTML = `
+            <div class="tracker-top">
+                <span class="tracker-avatar" style="background:${cardBg[pos]}">${cardEmoji[pos]}</span>
+                <span class="tracker-name">${cardLabel[pos]}</span>
+                <span class="tracker-home-badge" id="trackerBadge_${p}">0/4 HOME</span>
+            </div>
+            <div class="tracker-bar-bg">
+                <div class="tracker-bar-fill" id="trackerBar_${p}" style="background:${cardBg[pos]}; width:0%"></div>
+            </div>`;
+        list.appendChild(item);
+    }
+}
+
+function updateTokenTracker() {
+    for (let p = 0; p < 4; p++) {
+        if (!C.isActive(p)) continue;
+        let homeCount = 0;
+        for (let t = 0; t < 4; t++) {
+            const pos = C.tokenPos ? C.tokenPos(p, t) : -1;
+            if (pos === 56) homeCount++;
+        }
+        const badge = document.getElementById('trackerBadge_' + p);
+        if (badge) badge.textContent = `${homeCount}/4 HOME`;
+        const bar = document.getElementById('trackerBar_' + p);
+        if (bar) bar.style.width = `${(homeCount / 4) * 100}%`;
+    }
+}
+
+/* ════════════════════════════════════════
+   MAIN DRAW
+   ════════════════════════════════════════ */
+function draw() {
+    document.querySelectorAll('.token').forEach(t => t.remove());
+
+    const winner = C.getWinner();
+    const cur    = C.currentPlayer();
+    const dv     = C.getDice();
+
+    /* Dice button */
+    const diceEl = document.getElementById('diceDisplay');
+    diceEl.textContent = dv ? faces[dv] : '🎲';
+    const rollBtn = document.getElementById('rollBtn');
+    rollBtn.classList.toggle('dice-six', dv === 6);
+    rollBtn.disabled = winner >= 0;
+
+    /* Update Active Turn Widget */
+    const activeBox = document.getElementById('activeTurnBox');
+    if (activeBox) {
+        const curPos = cardToPlayer.indexOf(cur);
+        const curColor = cardBg[curPos] || '#EF4444';
+        activeBox.style.borderColor = curColor;
+        document.getElementById('activeAvatar').textContent = cardEmoji[curPos] || '👦';
+        document.getElementById('activeAvatar').style.background = curColor;
+        document.getElementById('activePlayerName').textContent = `${cardLabel[curPos]} (${names[cur]})`;
+        document.getElementById('activeHint').textContent = C.getMessage() || 'Rolling the dice...';
+    }
+
+    /* Player cards — highlight active player */
+    for (let pos = 0; pos < 4; pos++) {
+        const p    = cardToPlayer[pos];
+        const card = document.getElementById('pcard_' + pos);
+        if (!card) continue;
+        const isCur = C.isActive(p) && p === cur && winner < 0;
+        card.classList.toggle('pcard-active', isCur);
+    }
+
+    /* Place tokens */
+    for (let p = 0; p < 4; p++) {
+        if (!C.isActive(p)) continue;
+        for (let t = 0; t < 4; t++) {
+            const el = document.createElement('div');
+            el.className = 'token ' + colors[p];
+            if (p === cur && C.canMoveToken(t)) {
+                el.classList.add('can');
+                el.onclick = () => {
+                    sound.playToken();
+                    C.moveToken(t);
+                    checkMoveSounds();
+                    logEvent(`${names[p]} moved token ${t+1}`, 'MOVE');
+                    draw();
+                };
+            }
+            const cell = document.getElementById('c' + C.tokenRow(p,t) + '_' + C.tokenCol(p,t));
+            if (cell) cell.appendChild(el);
+        }
+    }
+
+    /* Message & Tracker */
+    document.getElementById('msg').textContent = C.getMessage();
+    updateTokenTracker();
+
+    /* Win overlay */
+    if (winner >= 0) {
+        if (!winSoundPlayed) {
+            winSoundPlayed = true;
+            sound.playWin();
+            logEvent(`🎉 ${names[winner]} has won the match!`, 'WIN');
+        }
+        document.getElementById('winOverlay').classList.remove('hidden');
+        document.getElementById('winTitle').textContent = names[winner].toUpperCase() + ' WINS! 🎉';
+        spawnConfetti();
+    }
+}
+
+/* ════════════════════════════════════════
+   CONFETTI (win screen)
+   ════════════════════════════════════════ */
+function spawnConfetti() {
+    const c = document.getElementById('confetti');
+    c.innerHTML = '';
+    const cols = ['#EF4444','#B8F84E','#FFE156','#60A5FA','#FF6B9D','#A855F7','#2DD4BF'];
+    for (let i = 0; i < 48; i++) {
+        const p = document.createElement('span');
+        p.className = 'conf-piece';
+        p.style.cssText = `left:${Math.random()*100}%;
+            background:${cols[i % cols.length]};
+            border: 2px solid #000;
+            animation-delay:${Math.random()*1.2}s;
+            animation-duration:${1.4 + Math.random()*1}s;
+            width:${8+Math.random()*8}px;
+            height:${8+Math.random()*8}px;
+            border-radius:${Math.random()>0.5?'50%':'3px'}`;
+        c.appendChild(p);
+    }
+}
+</script>
+<script src="ludo.js"></script>
+</body>
+</html>
