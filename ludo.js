@@ -174,11 +174,15 @@ Object.assign(Module, {
         return dice;
     },
 
-    moveToken(t) {
+    advanceTokenStep(t) {
         const p = cur();
-        if (!waiting || winner >= 0 || t < 0 || t > 3 || !p.canMove(t, dice)) return;
         if (p.pos[t] === -1) p.pos[t] = 0;
-        else p.pos[t] += dice;
+        else p.pos[t] += 1;
+    },
+
+    finalizeTokenMove(t) {
+        const p = cur();
+        if (!waiting || winner >= 0 || t < 0 || t > 3) return;
         let bonus = (dice === 6);
         msg = p.colour() + " moved";
         if (p.onTrack(t) && !isSafe(p.trackCell(t))) {
@@ -206,6 +210,14 @@ Object.assign(Module, {
         }
         if (bonus) msg += " — roll again!";
         else nextTurn();
+    },
+
+    moveToken(t) {
+        const p = cur();
+        if (!waiting || winner >= 0 || t < 0 || t > 3 || !p.canMove(t, dice)) return;
+        if (p.pos[t] === -1) p.pos[t] = 0;
+        else p.pos[t] += dice;
+        this.finalizeTokenMove(t);
     },
 
     tokenRow(p, t)     { return players[p].row(t); },

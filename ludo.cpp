@@ -31,7 +31,7 @@ bool isSafe(int cell) {
         if (safeCells[i] == cell) return true;
     return false;
 }
-
+// the parent class 
 class Player {
 public:
     int start, baseR, baseC, homeR, homeC, stepR, stepC;
@@ -78,7 +78,7 @@ public:
         return true;
     }
 };
-
+// child classes 
 class Red : public Player {
 public:
     Red() { start = 0; baseR = 2; baseC = 2; homeR = 7; homeC = 1; stepR = 0; stepC = 1; }
@@ -180,12 +180,14 @@ void moveToken(int t) {
         bonus = true;
         msg = p->colour() + " got a token home";
     }
+
     waiting = false;
     if (p->finished()) {
         winner = seats[turn];
         msg = p->colour() + " wins the game!";
         return;
     }
+    
     if (bonus) msg += ", roll again";
     else nextTurn();
 }

@@ -45,14 +45,14 @@
             </div>
         </aside>
 
-        <!-- CENTER: MAIN LANDING CARD -->
+    
         <main class="splash-center">
             <div class="splash-card">
                 <div class="logo-wrapper">
                     <img src="Ludo.png?v=2" class="splash-logo-img" alt="Ludo Game Banner">
                 </div>
                 <h1 class="splash-title">LUDO</h1>
-                <div class="splash-tag">CLASSIC BOARD GAME • OOP IN C++</div>
+                <div class="splash-tag">CLASSIC BOARD GAME</div>
 
                 <p class="choose-label">CHOOSE NUMBER OF PLAYERS</p>
                 <div class="player-btns">
@@ -219,16 +219,56 @@ class SoundManager {
     constructor() {
         this._ctx = null;
         this.muted = false;
+        this.homeAudio = new Audio('homepageaudio.mp3');
+        this.homeAudio.loop = true;
+        this.homeAudio.volume = 0.5;
+        this.jumpAudio = new Audio('jump sound.mp3');
+        this.jumpAudio.volume = 0.6;
     }
 
     get ctx() {
         if (!this._ctx)
             this._ctx = new (window.AudioContext || window.webkitAudioContext)();
+        if (this._ctx.state === 'suspended') {
+            this._ctx.resume().catch(() => {});
+        }
         return this._ctx;
+    }
+
+    playHomeMusic() {
+        if (this.muted) return;
+        const playPromise = this.homeAudio.play();
+        if (playPromise !== undefined) {
+            playPromise.catch(() => {
+                const onInteraction = () => {
+                    const splash = document.getElementById('splash');
+                    if (!this.muted && splash && !splash.classList.contains('hidden')) {
+                        this.homeAudio.play().catch(() => {});
+                    }
+                };
+                document.addEventListener('click', onInteraction, { once: true });
+                document.addEventListener('keydown', onInteraction, { once: true });
+            });
+        }
+    }
+
+    stopHomeMusic() {
+        try {
+            this.homeAudio.pause();
+            this.homeAudio.currentTime = 0;
+        } catch(e) {}
     }
 
     toggle() {
         this.muted = !this.muted;
+        if (this.muted) {
+            this.homeAudio.pause();
+        } else {
+            const splash = document.getElementById('splash');
+            if (splash && !splash.classList.contains('hidden')) {
+                this.playHomeMusic();
+            }
+        }
         return !this.muted;
     }
 
@@ -276,9 +316,74 @@ class SoundManager {
             .forEach(([f,t,d]) => this._note(f, t, d, 'sine', 0.2));
     }
 
-    playToken() { this._note(540, 0, 0.08, 'triangle', 0.25); }
+    playJump() {
+        if (this.muted) return;
+        try {
+            if (this.jumpAudio) {
+                const snd = this.jumpAudio.cloneNode();
+                snd.volume = 0.6;
+                snd.play().catch(() => this._synthJump());
+            } else {
+                this._synthJump();
+            }
+        } catch(e) {
+            this._synthJump();
+        }
+    }
+
+    _synthJump() {
+        try {
+            const ctx = this.ctx;
+            if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+            const t = ctx.currentTime;
+
+            // Bouncy jump oscillator (spring pitch sweep up)
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(300, t);
+            osc.frequency.exponentialRampToValueAtTime(750, t + 0.07);
+
+            gain.gain.setValueAtTime(0, t);
+            gain.gain.linearRampToValueAtTime(0.42, t + 0.012);
+            gain.gain.exponentialRampToValueAtTime(0.001, t + 0.11);
+
+            osc.start(t);
+            osc.stop(t + 0.12);
+
+            // Crisp contact pop for tactile cell landing
+            const osc2 = ctx.createOscillator();
+            const gain2 = ctx.createGain();
+            osc2.connect(gain2);
+            gain2.connect(ctx.destination);
+
+            osc2.type = 'triangle';
+            osc2.frequency.setValueAtTime(550, t);
+            osc2.frequency.exponentialRampToValueAtTime(980, t + 0.04);
+
+            gain2.gain.setValueAtTime(0.22, t);
+            gain2.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+
+            osc2.start(t);
+            osc2.stop(t + 0.06);
+        } catch(e) {}
+    }
+
+    playToken() { this.playJump(); }
 }
 const sound = new SoundManager();
+
+const unlockAudio = () => {
+    if (sound._ctx && sound._ctx.state === 'suspended') {
+        sound._ctx.resume().catch(() => {});
+    }
+};
+document.addEventListener('click', unlockAudio, { passive: true });
+document.addEventListener('keydown', unlockAudio, { passive: true });
+document.addEventListener('touchstart', unlockAudio, { passive: true });
 
 function toggleSound() {
     const isAudioOn = sound.toggle();
@@ -343,7 +448,7 @@ function testRollDice() {
    INIT (called by ludo.js bootstrap)
    ════════════════════════════════════════ */
 function init() {
-    ['newGame','rollDice','moveToken','tokenRow','tokenCol','tokenPos',
+    ['newGame','rollDice','moveToken','advanceTokenStep','finalizeTokenMove','tokenRow','tokenCol','tokenPos',
      'isActive','currentPlayer','getDice','getWinner','canMoveToken']
         .forEach(name => {
             C[name] = Module.cwrap(name, 'number', ['number','number']);
@@ -351,6 +456,7 @@ function init() {
     C.getMessage = Module.cwrap('getMessage', 'string', []);
     buildBoard();
     document.getElementById('splash').classList.remove('hidden');
+    sound.playHomeMusic();
 }
 
 /* ════════════════════════════════════════
@@ -409,11 +515,15 @@ function buildBoard() {
 }
 
 /* ════════════════════════════════════════
-   GAME FLOW
+   GAME FLOW & ANIMATED TOKEN STEPPING
    ════════════════════════════════════════ */
+let isMoving = false;
+
 function startGame(count) {
+    sound.stopHomeMusic();
     currentCount = count;
     winSoundPlayed = false;
+    isMoving = false;
     document.getElementById('splash').classList.add('hidden');
     document.getElementById('game').classList.remove('hidden');
     document.getElementById('winOverlay').classList.add('hidden');
@@ -426,43 +536,98 @@ function startGame(count) {
 }
 
 function restartCurrent() {
+    isMoving = false;
     logEvent(`Game Restarted!`, 'RESET');
     startGame(currentCount);
 }
 
 function backToSplash() {
+    isMoving = false;
     document.getElementById('game').classList.add('hidden');
     document.getElementById('winOverlay').classList.add('hidden');
     document.getElementById('splash').classList.remove('hidden');
+    sound.playHomeMusic();
 }
 
-function roll() {
+async function animateTokenMove(t) {
+    if (isMoving || C.getWinner() >= 0) return;
+    const p = C.currentPlayer();
+    if (!C.canMoveToken(t)) return;
+
+    isMoving = true;
+    const rollBtn = document.getElementById('rollBtn');
+    if (rollBtn) rollBtn.disabled = true;
+
+    const startPos = C.tokenPos(p, t);
+    const d = C.getDice();
+    const steps = (startPos === -1) ? 1 : d;
+
+    // Hop cell-by-cell across the board
+    for (let s = 0; s < steps; s++) {
+        C.advanceTokenStep(t);
+        sound.playJump();
+        draw(t, p);
+        await new Promise(r => setTimeout(r, 160));
+    }
+
+    C.finalizeTokenMove(t);
+    checkMoveSounds();
+    logEvent(`${names[p]} moved token ${t + 1} (${steps} block${steps > 1 ? 's' : ''})`, 'MOVE');
+    isMoving = false;
+    draw();
+}
+
+async function roll() {
+    if (isMoving || C.getWinner() >= 0) return;
     sound.playDice();
     const curBefore = C.currentPlayer();
     const d = C.rollDice();
     logEvent(`${names[curBefore]} rolled a ${d}`, d === 6 ? 'SIX' : 'ROLL');
     draw();
+
+    // Auto-move logic:
+    // If turn has not passed (player still has move to make and no winner)
+    if (C.getWinner() < 0 && C.currentPlayer() === curBefore) {
+        const p = curBefore;
+        const outTokens = [0, 1, 2, 3].filter(t => C.tokenPos(p, t) >= 0 && C.tokenPos(p, t) < 56);
+        const movable = [0, 1, 2, 3].filter(t => C.canMoveToken(t));
+
+        let autoTarget = -1;
+
+        if (movable.length === 1) {
+            // Exactly 1 token can legally move
+            autoTarget = movable[0];
+        } else if (outTokens.length === 0 && d === 6 && movable.length > 0) {
+            // All tokens in base, rolled 6 -> auto release first token
+            autoTarget = movable[0];
+        } else if (outTokens.length === 1 && d !== 6 && movable.length > 0) {
+            // Exactly one token is out and movable
+            autoTarget = outTokens[0];
+        }
+
+        if (autoTarget !== -1) {
+            await new Promise(r => setTimeout(r, 260));
+            if (!isMoving && C.canMoveToken(autoTarget) && C.currentPlayer() === p) {
+                await animateTokenMove(autoTarget);
+            }
+        }
+    }
 }
 
-function autoPlay() {
-    if (C.getWinner() >= 0) return;
-    let moved = false;
+async function autoPlay() {
+    if (isMoving || C.getWinner() >= 0) return;
+    let target = -1;
     for (let t = 0; t < 4; t++) {
         if (C.canMoveToken(t)) {
-            sound.playToken();
-            C.moveToken(t);
-            checkMoveSounds();
-            logEvent(`${names[C.currentPlayer()]} auto-moved token ${t+1}`, 'MOVE');
-            moved = true;
+            target = t;
             break;
         }
     }
-    if (!moved) {
-        sound.playDice();
-        const d = C.rollDice();
-        logEvent(`${names[C.currentPlayer()]} rolled ${d} via auto`, 'AUTO');
+    if (target !== -1) {
+        await animateTokenMove(target);
+    } else {
+        await roll();
     }
-    draw();
 }
 
 function checkMoveSounds() {
@@ -546,7 +711,7 @@ function updateTokenTracker() {
 /* ════════════════════════════════════════
    MAIN DRAW
    ════════════════════════════════════════ */
-function draw() {
+function draw(activeToken = -1, activePlayer = -1) {
     document.querySelectorAll('.token').forEach(t => t.remove());
 
     const winner = C.getWinner();
@@ -558,7 +723,7 @@ function draw() {
     diceEl.textContent = dv ? faces[dv] : '🎲';
     const rollBtn = document.getElementById('rollBtn');
     rollBtn.classList.toggle('dice-six', dv === 6);
-    rollBtn.disabled = winner >= 0;
+    rollBtn.disabled = winner >= 0 || isMoving;
 
     /* Update Active Turn Widget */
     const activeBox = document.getElementById('activeTurnBox');
@@ -587,14 +752,13 @@ function draw() {
         for (let t = 0; t < 4; t++) {
             const el = document.createElement('div');
             el.className = 'token ' + colors[p];
-            if (p === cur && C.canMoveToken(t)) {
+            if (p === activePlayer && t === activeToken) {
+                el.classList.add('hopping');
+            }
+            if (!isMoving && p === cur && C.canMoveToken(t)) {
                 el.classList.add('can');
                 el.onclick = () => {
-                    sound.playToken();
-                    C.moveToken(t);
-                    checkMoveSounds();
-                    logEvent(`${names[p]} moved token ${t+1}`, 'MOVE');
-                    draw();
+                    animateTokenMove(t);
                 };
             }
             const cell = document.getElementById('c' + C.tokenRow(p,t) + '_' + C.tokenCol(p,t));
